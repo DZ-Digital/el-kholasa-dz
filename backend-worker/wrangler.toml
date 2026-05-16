@@ -109,7 +109,7 @@ ALLOWED_ORIGINS = "*"
 [[env.development.d1_databases]]
 binding       = "DB"
 database_name = "elkholasa-db-dev"
-database_id   = "YOUR_D1_DEV_DATABASE_ID_HERE"
+database_id   = "5ceae9a1-6160-412d-a1ab-a732548fb0e8"
 migrations_dir = "migrations"
 
 [[env.development.kv_namespaces]]
