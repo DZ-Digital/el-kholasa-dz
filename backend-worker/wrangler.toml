@@ -41,7 +41,7 @@ cpu_ms = 30000
 [[d1_databases]]
 binding       = "DB"
 database_name = "elkholasa-db"
-database_id   = "YOUR_D1_DATABASE_ID_HERE"          # Set via: wrangler d1 create elkholasa-db
+database_id   = "5ceae9a1-6160-412d-a1ab-a732548fb0e8"          # Set via: wrangler d1 create elkholasa-db
 migrations_dir = "migrations"
 
 # --------------------------------------------------------------------------
@@ -134,7 +134,7 @@ ALLOWED_ORIGINS = "https://staging.elkholasa.dz"
 [[env.staging.d1_databases]]
 binding       = "DB"
 database_name = "elkholasa-db-staging"
-database_id   = "YOUR_D1_STAGING_DATABASE_ID_HERE"
+database_id   = "5ceae9a1-6160-412d-a1ab-a732548fb0e8"
 migrations_dir = "migrations"
 
 [[env.staging.kv_namespaces]]
