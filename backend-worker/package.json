@@ -1,0 +1,27 @@
+{
+  "name": "elkholasa-dz-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "El-Kholasa DZ — Cloudflare Worker Backend Engine",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "typecheck": "tsc --noEmit",
+    "db:create": "wrangler d1 create elkholasa-db",
+    "db:migrate:local": "wrangler d1 migrations apply elkholasa-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply elkholasa-db --remote",
+    "db:seed": "wrangler d1 execute elkholasa-db --file ./schema.sql --remote",
+    "types": "wrangler types"
+  },
+  "dependencies": {
+    "@cloudflare/ai": "^1.0.53",
+    "hono": "^4.7.11"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260109.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^3.101.0"
+  }
+}

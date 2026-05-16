@@ -1,1 +1,146 @@
+# =============================================================================
+# El-Kholasa DZ (الخلاصة الجزائرية) — Cloudflare Wrangler Configuration
+# =============================================================================
+# Target Runtime: Cloudflare Workers (Edge)
+# Compatibility: ES2022 + Node.js Compat
+# =============================================================================
 
+name                  = "elkholasa-dz-worker"
+main                  = "src/index.ts"
+compatibility_date    = "2025-01-01"
+compatibility_flags   = ["nodejs_compat"]
+workers_dev           = false
+
+# --------------------------------------------------------------------------
+# Route Configuration
+# Binds the Worker to the API subdomain — frontend is served via Pages
+# --------------------------------------------------------------------------
+routes = [
+  { pattern = "api.elkholasa.dz/*", zone_name = "elkholasa.dz" }
+]
+
+# --------------------------------------------------------------------------
+# Observability — Tail Workers & Logging
+# --------------------------------------------------------------------------
+[observability]
+enabled = true
+
+[observability.logs]
+invocation_logs = true
+
+# --------------------------------------------------------------------------
+# CPU & Memory Limits
+# --------------------------------------------------------------------------
+[limits]
+cpu_ms = 30000
+
+# --------------------------------------------------------------------------
+# D1 Database Binding — elkholasa-db
+# Edge-replicated SQLite for News Clusters, Sources, Timelines
+# --------------------------------------------------------------------------
+[[d1_databases]]
+binding       = "DB"
+database_name = "elkholasa-db"
+database_id   = "YOUR_D1_DATABASE_ID_HERE"          # Set via: wrangler d1 create elkholasa-db
+migrations_dir = "migrations"
+
+# --------------------------------------------------------------------------
+# Workers AI Binding
+# Models: llama-3.1-8b-instruct (summarization) + bge-small-en-v1.5 (embeddings)
+# --------------------------------------------------------------------------
+[ai]
+binding = "AI"
+
+# --------------------------------------------------------------------------
+# KV Namespace — Cache Layer for API Responses & Rate Limiting
+# --------------------------------------------------------------------------
+[[kv_namespaces]]
+binding       = "CACHE"
+id            = "YOUR_KV_NAMESPACE_ID_HERE"          # Set via: wrangler kv:namespace create CACHE
+preview_id    = "YOUR_KV_PREVIEW_NAMESPACE_ID_HERE"
+
+# --------------------------------------------------------------------------
+# Environment Variables (Non-Secret)
+# --------------------------------------------------------------------------
+[vars]
+ENVIRONMENT              = "production"
+APP_NAME                 = "El-Kholasa DZ"
+APP_NAME_AR              = "الخلاصة الجزائرية"
+ALLOWED_ORIGINS          = "https://elkholasa.dz,https://www.elkholasa.dz"
+CACHE_TTL_SECONDS        = "300"          # 5 min TTL for API responses
+EMBEDDING_MODEL          = "@cf/baai/bge-small-en-v1.5"
+SUMMARIZATION_MODEL      = "@cf/meta/llama-3.1-8b-instruct"
+CLUSTER_SIMILARITY_THRESHOLD = "0.82"    # Cosine similarity cutoff for clustering
+MAX_SUMMARY_POINTS       = "3"
+SEO_DESC_MAX_CHARS       = "150"
+MAX_CLUSTERS_PER_PAGE    = "20"
+SCRAPE_INTERVAL_HOURS    = "1"
+
+# Secrets (set via: wrangler secret put SECRET_NAME)
+# VAPID_PUBLIC_KEY         = "<set-via-wrangler-secret>"
+# VAPID_PRIVATE_KEY        = "<set-via-wrangler-secret>"
+# VAPID_SUBJECT            = "mailto:admin@elkholasa.dz"
+# INTERNAL_API_SECRET      = "<set-via-wrangler-secret>"
+# CLOUDFLARE_ACCOUNT_ID    = "<set-via-wrangler-secret>"
+
+# --------------------------------------------------------------------------
+# Cron Triggers — Automated Scraping Pipeline
+# Runs every hour to fetch and process new articles from all active sources
+# --------------------------------------------------------------------------
+[triggers]
+crons = [
+  "0 * * * *",    # Hourly: Main aggregation + clustering + summarization cycle
+  "*/15 * * * *", # Every 15 min: Breaking news scan (APS + TSA only)
+  "0 2 * * *",    # 2AM daily: Archive old clusters + cleanup raw_articles
+  "30 3 * * 0"    # Sunday 3:30AM: Re-embed and re-cluster the full DB
+]
+
+# --------------------------------------------------------------------------
+# Development Environment Overrides
+# --------------------------------------------------------------------------
+[env.development]
+name    = "elkholasa-dz-worker-dev"
+workers_dev = true
+
+[env.development.vars]
+ENVIRONMENT = "development"
+ALLOWED_ORIGINS = "*"
+
+[[env.development.d1_databases]]
+binding       = "DB"
+database_name = "elkholasa-db-dev"
+database_id   = "YOUR_D1_DEV_DATABASE_ID_HERE"
+migrations_dir = "migrations"
+
+[[env.development.kv_namespaces]]
+binding    = "CACHE"
+id         = "YOUR_KV_PREVIEW_NAMESPACE_ID_HERE"
+preview_id = "YOUR_KV_PREVIEW_NAMESPACE_ID_HERE"
+
+[env.development.ai]
+binding = "AI"
+
+# --------------------------------------------------------------------------
+# Staging Environment
+# --------------------------------------------------------------------------
+[env.staging]
+name    = "elkholasa-dz-worker-staging"
+routes  = [{ pattern = "api-staging.elkholasa.dz/*", zone_name = "elkholasa.dz" }]
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+ALLOWED_ORIGINS = "https://staging.elkholasa.dz"
+
+[[env.staging.d1_databases]]
+binding       = "DB"
+database_name = "elkholasa-db-staging"
+database_id   = "YOUR_D1_STAGING_DATABASE_ID_HERE"
+migrations_dir = "migrations"
+
+[[env.staging.kv_namespaces]]
+binding    = "CACHE"
+id         = "YOUR_KV_STAGING_NAMESPACE_ID_HERE"
+preview_id = "YOUR_KV_STAGING_NAMESPACE_ID_HERE"
+
+[env.staging.ai]
+binding = "AI"
